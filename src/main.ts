@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, Notice, editorInfoField, getFrontMatterInfo } from 'obsidian';
+import { Plugin, PluginSettingTab, Notice, editorInfoField, getFrontMatterInfo, type SettingDefinitionItem } from 'obsidian';
 import { EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
 import { foldable, foldedRanges, foldEffect, unfoldEffect } from '@codemirror/language';
@@ -14,10 +14,12 @@ export default class SectionLens extends Plugin {
   status!: HTMLElement;
 
   async onload() {
-    const data = await this.loadData();
-    if (['keep', 'restore', 'unfold'].includes(data?.exitAction)) this.exitAction = data.exitAction;
-    const plugin = this;
-    const extension = ViewPlugin.define(view => new Lens(view, plugin));
+    const data: unknown = await this.loadData();
+    if (typeof data === 'object' && data !== null && 'exitAction' in data &&
+      (data.exitAction === 'keep' || data.exitAction === 'restore' || data.exitAction === 'unfold')) {
+      this.exitAction = data.exitAction;
+    }
+    const extension = ViewPlugin.define(view => new Lens(view, this));
     this.registerEditorExtension(extension);
     this.status = this.addStatusBarItem();
     this.status.hide();
@@ -29,7 +31,7 @@ export default class SectionLens extends Plugin {
           const cm = (editor as unknown as { cm?: EditorView }).cm;
           const lens = cm?.plugin(extension);
           if (!cm || !lens) {
-            new Notice('Section Lens requires Live Preview or Source mode.');
+            new Notice('Open a note in editing mode to use this command.');
             return;
           }
           cm.dispatch({ effects: modeEffect.of(lens.mode === mode ? null : mode) });
@@ -62,7 +64,7 @@ class Lens {
   original: Range[] = [];
   tree: Heading[];
   file: unknown;
-  timer: ReturnType<typeof setTimeout> | null = null;
+  timer: number | null = null;
 
   constructor(public view: EditorView, private plugin: SectionLens) {
     this.file = view.state.field(editorInfoField, false)?.file;
@@ -78,7 +80,7 @@ class Lens {
   checkFile() {
     const file = this.view.state.field(editorInfoField, false)?.file;
     if (file !== this.file) {
-      if (this.timer !== null) clearTimeout(this.timer);
+      if (this.timer !== null) window.clearTimeout(this.timer);
       this.timer = null;
       this.mode = null;
       this.original = [];
@@ -114,8 +116,8 @@ class Lens {
   }
 
   schedule(stopping = false) {
-    if (this.timer !== null) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
+    if (this.timer !== null) window.clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
       this.timer = null;
       this.checkFile();
       if (stopping && !this.mode) this.stop();
@@ -157,7 +159,7 @@ class Lens {
   }
 
   stop() {
-    if (this.timer !== null) clearTimeout(this.timer);
+    if (this.timer !== null) window.clearTimeout(this.timer);
     this.timer = null;
     const ranges = this.ranges();
     if (this.plugin.exitAction !== 'keep') {
@@ -170,24 +172,24 @@ class Lens {
   }
 
   destroy() {
-    if (this.timer !== null) clearTimeout(this.timer);
+    if (this.timer !== null) window.clearTimeout(this.timer);
     this.plugin.controllers.delete(this);
   }
 }
 
 class LensSettings extends PluginSettingTab {
   constructor(app: SectionLens['app'], private plugin: SectionLens) { super(app, plugin); }
-  display() {
-    this.containerEl.empty();
-    new Setting(this.containerEl)
-      .setName('When a mode stops')
-      .setDesc('Applies when toggling off or disabling the plugin. Non-heading folds are preserved.')
-      .addDropdown(dropdown => dropdown
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [{
+      name: 'When a mode stops',
+      desc: 'Applies when toggling off or disabling the plugin. Non-heading folds are preserved.',
+      render: setting => { setting.addDropdown(dropdown => dropdown
         .addOptions({ keep: 'Keep folds', restore: 'Restore earlier folds', unfold: 'Unfold all headings' })
         .setValue(this.plugin.exitAction)
         .onChange(async value => {
           this.plugin.exitAction = value as ExitAction;
           await this.plugin.saveData({ exitAction: value });
-        }));
+        })); },
+    }];
   }
 }

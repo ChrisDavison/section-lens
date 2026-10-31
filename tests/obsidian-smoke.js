@@ -12,6 +12,7 @@
   const settle = () => new Promise(resolve => setTimeout(resolve, 150));
   const assert = (condition, message) => { if (!condition) throw new Error(message); results.push(message); };
   try {
+    plugin.exitAction = 'keep';
     await leaf.openFile(file, { state: { mode: 'source' } });
     app.workspace.setActiveLeaf(leaf, { focus: true });
     await settle();

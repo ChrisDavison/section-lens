@@ -2,6 +2,12 @@
 
 An Obsidian plugin that keeps the heading context around your cursor visible.
 
+Requires Obsidian **1.14.5 or newer**, the stable version used for integration testing. Uses mobile-compatible APIs; live integration testing currently covers desktop.
+
+## Install
+
+Download `main.js` and `manifest.json` from the [latest release](https://github.com/ChrisDavison/section-lens/releases/latest), place them in `<vault>/.obsidian/plugins/section-lens/`, reload Obsidian, and enable **Section Lens** in Community plugins. The plugin is not yet listed in the community directory.
+
 ## Commands
 
 - **Section Lens: Focus section** — expand every heading in the cursor's top-level section and collapse the other top-level sections.
@@ -37,10 +43,9 @@ Requires Node.js and npm.
 
 ```sh
 npm ci
-npm test
-npm run build
-npm run deploy -- /Users/davison/notes
-obsidian vault=notes plugin:reload id=section-lens
+npm run check
+npm run deploy -- /absolute/path/to/vault
+obsidian plugin:reload id=section-lens
 ```
 
 Deployment copies only `main.js` and `manifest.json`, retaining saved settings. For a first installation, enable **Section Lens** under Community plugins after deploying (reload Obsidian if it has not discovered the plugin yet).
@@ -54,7 +59,17 @@ To install elsewhere, copy those two files into `<vault>/.obsidian/plugins/secti
 The live smoke test requires the plugin enabled in a running Obsidian vault. It creates temporary notes in `Notes/`, verifies native fold state and rendered editor content, tests both editing modes and pane isolation, and removes its notes afterward:
 
 ```sh
-obsidian vault=notes eval code="eval(require('fs').readFileSync('/Users/davison/code/section-lens/tests/obsidian-smoke.js','utf8'))"
+obsidian eval code="eval(require('fs').readFileSync('/absolute/path/to/section-lens/tests/obsidian-smoke.js','utf8'))"
 ```
 
 The plugin uses CodeMirror's folding APIs and Obsidian's editor context field. The only untyped bridge is Obsidian's `Editor.cm` access, checked when a command runs.
+
+## Releases
+
+Update `manifest.json`, `package.json`, the lockfile, and `versions.json` together. Run `npm run check`, commit, then push a tag matching the version exactly (for example `0.1.0`, without `v`). GitHub Actions builds and publishes `main.js` and `manifest.json` as release attachments after all checks pass.
+
+## Privacy and license
+
+Section Lens runs offline. It makes no network requests, collects no telemetry, and does not access files outside the vault. It stores only its setting through Obsidian's plugin storage and changes editor folds, not note content.
+
+[MIT](LICENSE), copyright Chris Davison. The bundle includes the MIT-licensed Lezer Markdown parser and its common/highlight libraries by Marijn Haverbeke and contributors. Their notices are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) and embedded in the distributed `main.js`.

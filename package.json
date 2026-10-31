@@ -1,9 +1,15 @@
 {
   "name": "section-lens",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "description": "Focus on one heading section or follow the minimal heading branch at your cursor.",
+  "author": "Chris Davison",
+  "license": "MIT",
+  "repository": "github:ChrisDavison/section-lens",
   "private": true,
   "scripts": {
     "build": "tsc --noEmit && node esbuild.mjs",
+    "lint": "eslint . --max-warnings 0",
+    "check": "npm run lint && npm test && npm run build && node scripts/check-release.mjs",
     "test": "tsx --test tests/*.test.ts",
     "deploy": "npm run build && node deploy.mjs"
   },
@@ -11,11 +17,15 @@
     "@codemirror/language": "^6.11.0",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6.36.0",
+    "@eslint/js": "^9.39.5",
     "@lezer/markdown": "^1.4.0",
     "@types/node": "^22.0.0",
     "esbuild": "^0.25.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "latest",
     "tsx": "^4.0.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.72.1"
   }
 }
