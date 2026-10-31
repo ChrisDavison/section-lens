@@ -1,0 +1,9 @@
+{
+  "id": "section-lens",
+  "name": "Section Lens",
+  "version": "1.0.0",
+  "minAppVersion": "1.8.0",
+  "description": "Focus on one heading section or follow the minimal heading branch at your cursor.",
+  "author": "Davison",
+  "isDesktopOnly": false
+}
